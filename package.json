@@ -1,0 +1,30 @@
+{
+  "name": "smart_home_gateway",
+  "version": "1.0.0",
+  "description": "A versatile gateway for integrating and automating various smart home devices and protocols.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node dist/server.js",
+    "build": "tsc"
+  },
+  "keywords": [
+    "smart home",
+    "home automation",
+    "gateway",
+    "MQTT",
+    "IoT",
+    "integration",
+    "automation"
+  ],
+  "author": "Nicola Lo Caso <nicola.locaso@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "20",
+    "typescript": "5.5.4"
+  },
+  "dependencies": {
+    "axios": "1.7.4",
+    "mqtt": "5.10.0",
+    "unixpass": "3.0.1"
+  }
+}

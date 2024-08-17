@@ -1,0 +1,11 @@
+---
+services:
+  smart_home_gateway:
+    container_name: smart_home_gateway
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    image: nicklocaso/smart_home_gateway:1.0.0
+    ports:
+      - '8300:3000'
+    restart: unless-stopped
