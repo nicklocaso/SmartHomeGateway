@@ -17,28 +17,28 @@ type EnhancedUpdate = Update & { integrationName: string };
 export function startMQTTClient(parameters: MqttClientParameters): void {
   const { mqttHost, mqttUsername, mqttPassword, integrations, logger } = parameters;
 
-  if (integrations.length === 0) throw new Error('No one integrations is installed');
+  if (integrations.length === 0) throw new Error('No integrations are installed');
 
   const topics: { [key: Action['topic']]: EnhancedAction } = {};
   const updates: EnhancedUpdate[] = [];
   for (const integration of integrations) {
     for (const action of integration.getActions()) {
       if (!action.inactive) {
-        logger?.log(`${integration.name}: Registro il topic ${action.topic}`);
+        logger?.log(`${integration.name}: Registering topic ${action.topic}`);
         topics[action.topic] = { ...action, integrationName: integration.name };
       } else {
-        logger?.log(`Il topic ${action.topic} è disattivato dall'integrazione`);
+        logger?.log(`The topic ${action.topic} is disabled by the integration`);
       }
     }
     if (integration.getUpdates().length !== 0) {
-      logger?.log(`${integration.name}: Registro ${integration.getUpdates().length} updates`);
+      logger?.log(`${integration.name}: Registering ${integration.getUpdates().length} updates`);
       updates.push(
         ...integration.getUpdates().map((i) => {
           return { ...i, integrationName: integration.name };
         })
       );
     } else {
-      logger?.log(`${integration.name}: Non ci sono updates da registrare`);
+      logger?.log(`${integration.name}: No updates to register`);
     }
   }
 
@@ -48,15 +48,15 @@ export function startMQTTClient(parameters: MqttClientParameters): void {
   });
 
   client.on('connect', () => {
-    console.log(`Connesso a MQTT broker ${mqttHost}`);
+    logger?.log(`Connected to MQTT broker ${mqttHost}`);
     for (const topic in topics) {
       const action = topics[topic];
-      logger?.log(`Mi sottoscrivo al topic ${action.topic}`);
+      logger?.log(`Subscribing to topic ${action.topic}`);
       client.subscribe(action.topic);
     }
     for (const update of updates) {
       const _update = () => {
-        logger?.log(`Eseguo l'update di ${update.integrationName}`);
+        logger?.log(`Executing update for ${update.integrationName}`);
         try {
           update.update(client.publish.bind(client));
         } catch (error) {
@@ -70,23 +70,23 @@ export function startMQTTClient(parameters: MqttClientParameters): void {
 
   client.on('message', async (incomingTopic, incomingMessage) => {
     const payload = incomingMessage?.toString();
-    logger?.log(`Ricevuto messaggio su topic ${incomingTopic}: ${payload}`);
+    logger?.log(`Received message on topic ${incomingTopic}: ${payload}`);
 
     const action = topics[incomingTopic];
 
     if (action) {
-      logger?.log(`Richiamo ${incomingTopic} di ${action.integrationName}`);
+      logger?.log(`Calling ${incomingTopic} of ${action.integrationName}`);
       try {
         action.callback(payload);
       } catch (error) {
         logger?.error(error);
       }
     } else {
-      logger?.log(`Topic ${incomingTopic} non riconosciuto`);
+      logger?.log(`Topic ${incomingTopic} not recognized`);
     }
   });
 
   client.on('error', (err) => {
-    console.error(`Errore del client MQTT: ${err}`);
+    logger?.error(`MQTT client error: ${err}`);
   });
 }

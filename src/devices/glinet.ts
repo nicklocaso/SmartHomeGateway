@@ -154,7 +154,7 @@ export class GLiNet extends DeviceIntegration {
             publish('home/glinet/wifi_5g/attributes', JSON.stringify(wifi5GState));
             this.logger.log(JSON.stringify(wifi5GState, null, 2));
 
-            this.logger.log('Stato Wi-Fi aggiornato e pubblicato su MQTT');
+            this.logger.log('Wi-Fi status updated and published on MQTT');
           }
         },
         ms: 30000
