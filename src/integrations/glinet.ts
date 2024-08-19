@@ -3,13 +3,13 @@ import crypto from 'crypto';
 import up from 'unixpass';
 import {
   Action,
-  DeviceIntegration,
-  DeviceIntegrationParameters,
+  Integration,
+  IntegrationParameters,
   SetupParameters,
   Update
-} from '../deviceIntegration';
+} from '../integration';
 
-export class GLiNet extends DeviceIntegration {
+export class GLiNet extends Integration {
   static async handleRequest(
     host: string,
     username: string,
@@ -54,14 +54,14 @@ export class GLiNet extends DeviceIntegration {
     return response.data;
   }
 
-  logger: NonNullable<DeviceIntegrationParameters['logger']>;
+  logger: NonNullable<IntegrationParameters['logger']>;
 
   name: string;
   host: string;
   username: string;
   password: string;
 
-  constructor(parameters: DeviceIntegrationParameters) {
+  constructor(parameters: IntegrationParameters) {
     super();
     this.name = 'GLiNet';
     if (parameters.logger === undefined)

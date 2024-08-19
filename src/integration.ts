@@ -1,6 +1,6 @@
 import { IClientPublishOptions, MqttClient, PacketCallback } from 'mqtt/*';
 
-export type DeviceIntegrationParameters = {
+export type IntegrationParameters = {
   logger?: typeof console;
 };
 
@@ -20,7 +20,7 @@ export type Update = {
   inactive?: boolean;
 };
 
-export abstract class DeviceIntegration {
+export abstract class Integration {
   abstract name: string;
 
   abstract getActions(): Array<Action>;

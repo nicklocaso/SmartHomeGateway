@@ -1,12 +1,12 @@
 import mqtt from 'mqtt';
-import { Action, DeviceIntegration, Update } from './deviceIntegration';
+import { Action, Integration, Update } from './integration';
 
 export type MqttClientParameters = {
   mqttHost: string;
   mqttUsername: string;
   mqttPassword: string;
 
-  integrations: Array<DeviceIntegration>;
+  integrations: Array<Integration>;
 
   logger?: typeof console;
 };

@@ -1,4 +1,4 @@
-import { GLiNet } from './devices/glinet';
+import { GLiNet } from './integrations/glinet';
 import { startMQTTClient } from './mqttClient';
 
 const logger = console;

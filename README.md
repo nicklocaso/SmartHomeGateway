@@ -56,7 +56,7 @@ The application will connect to the MQTT broker specified in the environment var
 
 ## Device Integration
 
-To add a new device integration, create a new class that extends the DeviceIntegration abstract class and implements the required methods (getActions, getUpdates, and setup). Then, add this new integration to the list of integrations when starting the MQTT client.
+To add a new device integration, create a new class that extends the Integration abstract class and implements the required methods (getActions, getUpdates, and setup). Then, add this new integration to the list of integrations when starting the MQTT client.
 
 ## Environment Variables
 
