@@ -77,7 +77,7 @@ export function startMQTTClient(parameters: MqttClientParameters): void {
     if (action) {
       logger?.log(`Calling ${incomingTopic} of ${action.integrationName}`);
       try {
-        action.callback(payload);
+        logger?.log(await action.callback(payload));
       } catch (error) {
         logger?.error(error);
       }

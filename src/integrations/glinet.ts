@@ -152,6 +152,31 @@ export class GLiNet extends Integration {
           }
         },
         ms: 30000
+      },
+      {
+        update: async (publish) => {
+          {
+            const tailscaleStatus = await this.handleRequest('call', ['tailscale', 'get_config']);
+
+            const tailscaleState = {
+              state: tailscaleStatus.result.enabled ? 'ON' : 'OFF',
+              enabled: tailscaleStatus.result.enabled,
+              lan_ip: tailscaleStatus.result.lan_ip,
+              wan_enabled: tailscaleStatus.result.wan_enabled,
+              lan_enabled: tailscaleStatus.result.lan_enabled
+            };
+
+            publish(
+              'home/glinet/tailscale/status',
+              JSON.stringify({ state: tailscaleState.state })
+            );
+            publish('home/glinet/tailscale/attributes', JSON.stringify(tailscaleState));
+            this.logger.log(JSON.stringify(tailscaleState, null, 2));
+
+            this.logger.log('Tailscale status updated and published on MQTT');
+          }
+        },
+        ms: 30000
       }
     ];
   }
