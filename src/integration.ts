@@ -7,10 +7,13 @@ export type IntegrationParameters = {
 export type Action = {
   topic: string;
   callback: (payload: string) => void;
+  updates?: string[];
   inactive?: boolean;
 };
 
 export type Update = {
+  id: string;
+  description: string;
   update: (publish: (topic: string, message: string | Buffer) => MqttClient) => void;
   ms: number;
   inactive?: boolean;

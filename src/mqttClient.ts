@@ -20,7 +20,7 @@ export function startMQTTClient(parameters: MqttClientParameters): void {
   if (integrations.length === 0) throw new Error('No integrations are installed');
 
   const topics: { [key: Action['topic']]: EnhancedAction } = {};
-  const updates: EnhancedUpdate[] = [];
+  let updates: { [key: Update['id']]: EnhancedUpdate } = {};
   for (const integration of integrations) {
     for (const action of integration.getActions()) {
       if (!action.inactive) {
@@ -32,11 +32,13 @@ export function startMQTTClient(parameters: MqttClientParameters): void {
     }
     if (integration.getUpdates().length !== 0) {
       logger?.log(`${integration.name}: Registering ${integration.getUpdates().length} updates`);
-      updates.push(
-        ...integration.getUpdates().map((i) => {
-          return { ...i, integrationName: integration.name };
-        })
-      );
+      updates = {
+        ...updates,
+        ...integration.getUpdates().reduce((acc: typeof updates, actual) => {
+          acc[actual.id] = { ...actual, integrationName: integration.name };
+          return acc;
+        }, {})
+      };
     } else {
       logger?.log(`${integration.name}: No updates to register`);
     }
@@ -54,7 +56,8 @@ export function startMQTTClient(parameters: MqttClientParameters): void {
       logger?.log(`Subscribing to topic ${action.topic}`);
       client.subscribe(action.topic);
     }
-    for (const update of updates) {
+    for (const updateId in updates) {
+      const update = updates[updateId];
       const _update = () => {
         logger?.log(`Executing update for ${update.integrationName}`);
         try {
@@ -78,6 +81,20 @@ export function startMQTTClient(parameters: MqttClientParameters): void {
       logger?.log(`Calling ${incomingTopic} of ${action.integrationName}`);
       try {
         logger?.log(await action.callback(payload));
+        if (action.updates !== undefined && action.updates?.length !== 0) {
+          for (const updateId of action.updates) {
+            const update = updates[updateId];
+            const _update = () => {
+              logger?.log(`Executing update for ${update.integrationName}`);
+              try {
+                update.update(client.publish.bind(client));
+              } catch (error) {
+                logger?.error(error);
+              }
+            };
+            _update();
+          }
+        }
       } catch (error) {
         logger?.error(error);
       }

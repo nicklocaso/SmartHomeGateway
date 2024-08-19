@@ -73,7 +73,12 @@ export class GLiNet extends Integration {
   }
 
   getActions(): Array<Action> {
-    const generateAction = (arg0: string, arg1: string, inactive?: boolean): Action => {
+    const generateAction = (
+      arg0: string,
+      arg1: string,
+      updates?: string[],
+      inactive?: boolean
+    ): Action => {
       return {
         topic: `home/glinet/${arg0}/${arg1}`,
         callback: (payload) => {
@@ -83,6 +88,7 @@ export class GLiNet extends Integration {
           }
           return this.handleRequest('call', params);
         },
+        updates,
         inactive
       };
     };
@@ -102,16 +108,18 @@ export class GLiNet extends Integration {
       },
       generateAction('system', 'get_status'),
       generateAction('tailscale', 'get_status'),
-      generateAction('tailscale', 'set_config'),
+      generateAction('tailscale', 'set_config', ['tailscale_status']),
       generateAction('wifi', 'get_status'),
       generateAction('wifi', 'get_config'),
-      generateAction('wifi', 'set_config')
+      generateAction('wifi', 'set_config', ['wifi_status'])
     ];
   }
 
   getUpdates(): Array<Update> {
     return [
       {
+        id: 'wifi_status',
+        description: '',
         update: async (publish) => {
           {
             const wifiStatus = await this.handleRequest('call', ['wifi', 'get_config']);
@@ -151,9 +159,11 @@ export class GLiNet extends Integration {
             this.logger.log('Wi-Fi status updated and published on MQTT');
           }
         },
-        ms: 30000
+        ms: 60000
       },
       {
+        id: 'tailscale_status',
+        description: '',
         update: async (publish) => {
           {
             const tailscaleStatus = await this.handleRequest('call', ['tailscale', 'get_config']);
@@ -176,7 +186,7 @@ export class GLiNet extends Integration {
             this.logger.log('Tailscale status updated and published on MQTT');
           }
         },
-        ms: 30000
+        ms: 60000
       }
     ];
   }
