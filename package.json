@@ -5,6 +5,7 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node dist/server.js",
+    "start:dev": "node -r dotenv/config dist/server.js dotenv_config_path=./environments/local/.env",
     "build": "tsc"
   },
   "keywords": [
@@ -20,6 +21,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/node": "20",
+    "dotenv": "16.4.5",
     "typescript": "5.5.4"
   },
   "dependencies": {
