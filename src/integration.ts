@@ -4,10 +4,6 @@ export type IntegrationParameters = {
   logger?: typeof console;
 };
 
-export type SetupParameters = {
-  client: MqttClient;
-};
-
 export type Action = {
   topic: string;
   callback: (payload: string) => void;
@@ -26,6 +22,4 @@ export abstract class Integration {
   abstract getActions(): Array<Action>;
 
   abstract getUpdates(): Array<Update>;
-
-  abstract setup(parameters: SetupParameters): void;
 }

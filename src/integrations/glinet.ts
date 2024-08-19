@@ -1,13 +1,7 @@
 import axios from 'axios';
 import crypto from 'crypto';
 import up from 'unixpass';
-import {
-  Action,
-  Integration,
-  IntegrationParameters,
-  SetupParameters,
-  Update
-} from '../integration';
+import { Action, Integration, IntegrationParameters, Update } from '../integration';
 
 export class GLiNet extends Integration {
   static async handleRequest(
@@ -161,8 +155,6 @@ export class GLiNet extends Integration {
       }
     ];
   }
-
-  setup(parameters: SetupParameters): void {}
 
   async handleRequest(method: string, params: string[]) {
     return GLiNet.handleRequest(this.host, this.username, this.password, method, params);
