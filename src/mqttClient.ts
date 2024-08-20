@@ -5,14 +5,27 @@ export type MqttClientParameters = {
   mqttHost: string;
   mqttUsername: string;
   mqttPassword: string;
-
   integrations: Array<Integration>;
-
   logger?: typeof console;
 };
 
 type EnhancedAction = Action & { integrationName: string };
 type EnhancedUpdate = Update & { integrationName: string };
+
+const generateUpdate = (
+  client: mqtt.MqttClient,
+  update: EnhancedUpdate,
+  logger?: MqttClientParameters['logger']
+) => {
+  return () => {
+    logger?.log(`Executing update for ${update.integrationName}`);
+    try {
+      update.update(client.publish.bind(client));
+    } catch (error) {
+      logger?.error(error);
+    }
+  };
+};
 
 export function startMQTTClient(parameters: MqttClientParameters): void {
   const { mqttHost, mqttUsername, mqttPassword, integrations, logger } = parameters;
@@ -58,16 +71,9 @@ export function startMQTTClient(parameters: MqttClientParameters): void {
     }
     for (const updateId in updates) {
       const update = updates[updateId];
-      const _update = () => {
-        logger?.log(`Executing update for ${update.integrationName}`);
-        try {
-          update.update(client.publish.bind(client));
-        } catch (error) {
-          logger?.error(error);
-        }
-      };
-      _update();
-      setInterval(_update, update.ms);
+      const updateFunction = generateUpdate(client, update, logger);
+      updateFunction();
+      setInterval(updateFunction, update.ms);
     }
   });
 
@@ -84,15 +90,8 @@ export function startMQTTClient(parameters: MqttClientParameters): void {
         if (action.updates !== undefined && action.updates?.length !== 0) {
           for (const updateId of action.updates) {
             const update = updates[updateId];
-            const _update = () => {
-              logger?.log(`Executing update for ${update.integrationName}`);
-              try {
-                update.update(client.publish.bind(client));
-              } catch (error) {
-                logger?.error(error);
-              }
-            };
-            _update();
+            const updateFunction = generateUpdate(client, update, logger);
+            updateFunction();
           }
         }
       } catch (error) {
