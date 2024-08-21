@@ -18,7 +18,7 @@ const generateUpdate = (
   logger?: MqttClientParameters['logger']
 ) => {
   return () => {
-    logger?.log(`Executing update for ${update.integrationName}`);
+    logger?.log(`Executing update for ${update.integrationName}:${update.id}`);
     try {
       update.update(client.publish.bind(client));
     } catch (error) {
