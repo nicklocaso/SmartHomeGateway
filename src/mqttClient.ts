@@ -37,23 +37,25 @@ export function startMQTTClient(parameters: MqttClientParameters): void {
   for (const integration of integrations) {
     for (const action of integration.getActions()) {
       if (!action.inactive) {
-        logger?.log(`${integration.name}: Registering topic ${action.topic}`);
-        topics[action.topic] = { ...action, integrationName: integration.name };
+        logger?.log(`${integration.getName()}: Registering topic ${action.topic}`);
+        topics[action.topic] = { ...action, integrationName: integration.getName() };
       } else {
         logger?.log(`The topic ${action.topic} is disabled by the integration`);
       }
     }
     if (integration.getUpdates().length !== 0) {
-      logger?.log(`${integration.name}: Registering ${integration.getUpdates().length} updates`);
+      logger?.log(
+        `${integration.getName()}: Registering ${integration.getUpdates().length} updates`
+      );
       updates = {
         ...updates,
         ...integration.getUpdates().reduce((acc: typeof updates, actual) => {
-          acc[actual.id] = { ...actual, integrationName: integration.name };
+          acc[actual.id] = { ...actual, integrationName: integration.getName() };
           return acc;
         }, {})
       };
     } else {
-      logger?.log(`${integration.name}: No updates to register`);
+      logger?.log(`${integration.getName()}: No updates to register`);
     }
   }
 

@@ -20,9 +20,17 @@ export type Update = {
 };
 
 export abstract class Integration {
-  abstract name: string;
+  private name: string;
+
+  constructor(name: string) {
+    this.name = name;
+  }
 
   abstract getActions(): Array<Action>;
 
   abstract getUpdates(): Array<Update>;
+
+  getName() {
+    return this.name;
+  }
 }

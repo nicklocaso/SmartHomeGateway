@@ -4,13 +4,7 @@ import up from 'unixpass';
 import { Action, Integration, IntegrationParameters, Update } from '../integration';
 
 export class GLiNet extends Integration {
-  static async handleRequest(
-    host: string,
-    username: string,
-    password: string,
-    method: string,
-    params: string[]
-  ) {
+  static async getSessionId(host: string, username: string, password: string) {
     const challengeResponse = await axios.post(`http://${host}/rpc`, {
       jsonrpc: '2.0',
       method: 'challenge',
@@ -36,8 +30,10 @@ export class GLiNet extends Integration {
       id: 0
     });
 
-    const sid = loginResponse.data.result.sid;
+    return loginResponse.data.result.sid;
+  }
 
+  static async handleRequest(host: string, sid: string, method: string, params: string[]) {
     const response = await axios.post(`http://${host}/rpc`, {
       jsonrpc: '2.0',
       method,
@@ -50,14 +46,14 @@ export class GLiNet extends Integration {
 
   logger: NonNullable<IntegrationParameters['logger']>;
 
-  name: string;
-  host: string;
-  username: string;
-  password: string;
+  private host: string;
+  private username: string;
+  private password: string;
+  private sid: string = '';
+  private sidPromise: Promise<void> | null = null;
 
   constructor(parameters: IntegrationParameters) {
-    super();
-    this.name = 'GLiNet';
+    super('GLiNet');
     if (parameters.logger === undefined)
       throw new Error('GLiNET logger is missing in input variables');
     this.logger = parameters.logger;
@@ -86,7 +82,7 @@ export class GLiNet extends Integration {
           if (payload) {
             params.push(JSON.parse(payload));
           }
-          return this.handleRequest('call', params);
+          return this.makeRequest('call', params);
         },
         updates,
         inactive
@@ -100,7 +96,7 @@ export class GLiNet extends Integration {
           if (payload) {
             const ifaces = JSON.parse(payload);
             for (const iface of ifaces) {
-              requests.push(this.handleRequest('call', ['wifi', 'set_config', iface]));
+              requests.push(this.makeRequest('call', ['wifi', 'set_config', iface]));
             }
           }
           return Promise.all(requests);
@@ -122,7 +118,7 @@ export class GLiNet extends Integration {
         description: '',
         update: async (publish) => {
           {
-            const wifiStatus = await this.handleRequest('call', ['wifi', 'get_config']);
+            const wifiStatus = await this.makeRequest('call', ['wifi', 'get_config']);
 
             const wifiStatus2G = wifiStatus.result.res
               .find(<Type extends { device: string }>(e: Type) => e.device === 'radio0')
@@ -150,11 +146,11 @@ export class GLiNet extends Integration {
 
             publish('home/glinet/wifi_2g/status', JSON.stringify({ state: wifi2GState.state }));
             publish('home/glinet/wifi_2g/attributes', JSON.stringify(wifi2GState));
-            this.logger.log(JSON.stringify(wifi2GState, null, 2));
+            this.logger.log('home/glinet/wifi_2g/attributes', JSON.stringify(wifi2GState, null, 2));
 
             publish('home/glinet/wifi_5g/status', JSON.stringify({ state: wifi5GState.state }));
             publish('home/glinet/wifi_5g/attributes', JSON.stringify(wifi5GState));
-            this.logger.log(JSON.stringify(wifi5GState, null, 2));
+            this.logger.log('home/glinet/wifi_5g/attributes', JSON.stringify(wifi5GState, null, 2));
 
             this.logger.log('Wi-Fi status updated and published on MQTT');
           }
@@ -166,7 +162,7 @@ export class GLiNet extends Integration {
         description: '',
         update: async (publish) => {
           {
-            const tailscaleStatus = await this.handleRequest('call', ['tailscale', 'get_config']);
+            const tailscaleStatus = await this.makeRequest('call', ['tailscale', 'get_config']);
 
             const tailscaleState = {
               state: tailscaleStatus.result.enabled ? 'ON' : 'OFF',
@@ -181,7 +177,10 @@ export class GLiNet extends Integration {
               JSON.stringify({ state: tailscaleState.state })
             );
             publish('home/glinet/tailscale/attributes', JSON.stringify(tailscaleState));
-            this.logger.log(JSON.stringify(tailscaleState, null, 2));
+            this.logger.log(
+              'home/glinet/tailscale/attributes',
+              JSON.stringify(tailscaleState, null, 2)
+            );
 
             this.logger.log('Tailscale status updated and published on MQTT');
           }
@@ -191,7 +190,29 @@ export class GLiNet extends Integration {
     ];
   }
 
-  async handleRequest(method: string, params: string[]) {
-    return GLiNet.handleRequest(this.host, this.username, this.password, method, params);
+  async makeRequest(method: string, params: string[], retry?: boolean): Promise<any> {
+    const getSessionId = async () => {
+      if (!this.sidPromise) {
+        this.sidPromise = (async () => {
+          this.sid = await GLiNet.getSessionId(this.host, this.username, this.password);
+          this.logger.log('New session Id', this.sid);
+          this.sidPromise = null;
+        })();
+      }
+      await this.sidPromise;
+    };
+
+    if (!this.sid) await getSessionId();
+    const response = await GLiNet.handleRequest(this.host, this.sid, method, params);
+    if (response.error && response.error.code === -32000) {
+      if (retry)
+        throw new Error(
+          'Session ID renewal failed. The request could not be completed successfully after retrying.'
+        );
+      getSessionId();
+      return this.makeRequest(method, params, true);
+    }
+
+    return response;
   }
 }
