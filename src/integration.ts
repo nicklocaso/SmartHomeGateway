@@ -20,10 +20,16 @@ export type Update = {
 };
 
 export abstract class Integration {
-  private name: string;
+  protected name: string;
+  protected version: string;
+  protected logger: NonNullable<IntegrationParameters['logger']>;
 
-  constructor(name: string) {
+  constructor(parameters: IntegrationParameters, name: string, version: string) {
     this.name = name;
+    this.version = version;
+    if (parameters.logger === undefined)
+      throw new Error('GLiNET logger is missing in input variables');
+    this.logger = parameters.logger;
   }
 
   abstract getActions(): Array<Action>;
@@ -32,5 +38,9 @@ export abstract class Integration {
 
   getName() {
     return this.name;
+  }
+
+  getVersion() {
+    return this.version;
   }
 }

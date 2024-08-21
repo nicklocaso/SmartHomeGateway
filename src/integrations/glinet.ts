@@ -44,8 +44,6 @@ export class GLiNet extends Integration {
     return response.data;
   }
 
-  logger: NonNullable<IntegrationParameters['logger']>;
-
   private host: string;
   private username: string;
   private password: string;
@@ -53,10 +51,7 @@ export class GLiNet extends Integration {
   private sidPromise: Promise<void> | null = null;
 
   constructor(parameters: IntegrationParameters) {
-    super('GLiNet');
-    if (parameters.logger === undefined)
-      throw new Error('GLiNET logger is missing in input variables');
-    this.logger = parameters.logger;
+    super(parameters, 'GLiNet', '1.0.0');
     if (
       process.env.GLiNET_HOST === undefined ||
       process.env.GLiNET_USERNAME === undefined ||
